@@ -38,7 +38,7 @@ void setup() {
   delay(1000);
   keyboard.begin(DataPin, IRQpin);
   Serial.begin(9600);
-  Serial.println("MA Keyboard V0.1");
+  Serial.println("MA Keyboard V0.2");
   init_DBs ();
   setup_artnet ();
   Show_all_records();
@@ -59,8 +59,8 @@ void loop() {
 		//  Windows key pressed. Access mapping
 		mapping_keys ();
 	}else{
-		// Execute function attached to S
-		Send_DMX_Function (record_value);
+		// Send artnet channel coresponding to S
+		artnet_buffer (record_value);
 	}
   }
 

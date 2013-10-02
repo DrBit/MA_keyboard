@@ -66,24 +66,29 @@ void setup_artnet() {
 
 void loop_artnet() {
   
-   check_arduino_inputs();
    construct_arnet_packet();
    
    Udp.beginPacket(destination_Ip, localPort);
    Udp.write(ArtDmxBuffer,(art_net_header_size+number_of_channels+1)); // was Udp.sendPacket
    Udp.endPacket();
 
+   clear_artnet_buffer ();
+
+   delay (30);
+
 }
 
-void check_arduino_inputs()
+void artnet_buffer(int dmx_channel)
 {
- //data from arduino aquisition
+  // Build arduino bufffer
+  buffer_dmx[dmx_channel]=byte(255);
+}
 
-  int temp_val=0;
-  for(int i=0;i<6;i++)//reads the 6 analogic inputs and set the data from 1023 steps to 255 steps (dmx)
+
+void clear_artnet_buffer () {
+  for (int t= 0;t<number_of_channels;t++)
   {
-    temp_val=analogRead(i); 
-    buffer_dmx[i]=byte(temp_val/4);
+    buffer_dmx[t]=byte(0);    
   }
 }
 
