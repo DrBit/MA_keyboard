@@ -38,7 +38,7 @@ void setup() {
   delay(1000);
   keyboard.begin(DataPin, IRQpin);
   Serial.begin(9600);
-  Serial.println("MA Keyboard Test");
+  Serial.println("MA Keyboard V0.1");
   init_DBs ();
   setup_artnet ();
   Show_all_records();
