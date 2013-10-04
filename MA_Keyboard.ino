@@ -38,10 +38,10 @@ void setup() {
   delay(1000);
   keyboard.begin(DataPin, IRQpin);
   Serial.begin(9600);
-  Serial.println("MA Keyboard V0.2");
+  Serial.println("MA Keyboard V0.3");
   init_DBs ();
   setup_artnet ();
-  Show_all_records();
+  //Show_all_records();
   Serial.println("Press ` Key to access mapping functions");
 }
 
@@ -49,10 +49,10 @@ void loop() {
   if (keyboard.available()) {
     
     // read the next key
-    char c = keyboard.read();
-    unsigned int record_value = read_record(c);
+    unsigned long c = keyboard.read();
+    unsigned long record_value = read_record(c);
 
-	Serial.print(F("Ascii Key Pressed: ")); Serial.print(c,DEC); Serial.print(F(" = ")); Serial.write(c);  		// Add print of the ascii letter to verify
+	Serial.print(F("Ascii Key Pressed: ")); Serial.print(c); Serial.print(F(" = ")); Serial.write(c);Serial.print(F(" = ")); Serial.print(c,HEX);  		// Add print of the ascii letter to verify
 	Serial.print(F(" * Attached function: ")); Serial.println(record_value);
 
 	if (c == 96) {
@@ -82,7 +82,7 @@ void mapping_keys () {
 	Serial.println(F(" "));
 
 	unsigned int record_value = read_record(key_index);
-	if (record_value == 65535) {
+	if (record_value == 255) {
 		Serial.println(F("Mapping it's empty "));
 	}else{
 		Serial.print(F("Previous mapped function was: "));

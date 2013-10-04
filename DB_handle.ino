@@ -11,13 +11,13 @@ DB db;
 
 // Starting position of the table. Each value in structure must be count
 // byte counts as 1, int as 2 etc....
-#define KEYS_TBL_START 50
-#define number_of_keys_to_store 200
+#define KEYS_TBL_START 0
+#define number_of_keys_to_store 1000
 
 
 struct MA_KEY {
 // Containig
-  unsigned int Key_function;
+  byte Key_function;
 } DB_keys;
 
 // When changing the structure data in the eeprom needs to be rewritten
@@ -47,13 +47,13 @@ void Show_all_records() {
 }
 
 
-unsigned int read_record (int recordNum) {
+unsigned int read_record (unsigned long recordNum) {
 	db.open(KEYS_TBL_START);
 	db.read(recordNum, DB_REC DB_keys);
 	return DB_keys.Key_function;
 }
 
-void write_record (int recordNum, unsigned int value) {
+void write_record (unsigned long recordNum, unsigned int value) {
 	db.open(KEYS_TBL_START);
 	DB_keys.Key_function = value;
 	db.write(recordNum, DB_REC DB_keys);
