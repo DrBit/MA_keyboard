@@ -38,11 +38,11 @@ void setup() {
   delay(1000);
   keyboard.begin(DataPin, IRQpin);
   Serial.begin(9600);
-  Serial.println("MA Keyboard V0.4");
+  Serial.println("MA Keyboard V0.5");
   init_DBs ();
   setup_artnet ();
   //Show_all_records();
-  Serial.println("Press ` Key to access mapping functions");
+  Serial.println("Press Ctrol + ESC Key to access mapping functions\n");
 }
 
 void loop() {
@@ -59,10 +59,10 @@ void loop() {
     unsigned long c = keyboard.read();
     unsigned long dmxChannel = read_record(c);
 
-	Serial.print(F("Key Pressed: ")); Serial.print(c); Serial.print(F(" = ")); Serial.write(c);Serial.print(F(" = ")); Serial.print(c,HEX);  		// Add print of the ascii letter to verify
-	Serial.print(F(" * Attached function DMX: ")); Serial.println(dmxChannel);
+	Serial.print(F("* Keycode Pressed: ")); Serial.print(c); Serial.print(F(" * HEX = ")); Serial.print(c,HEX);  		// Add print of the ascii letter to verify
+	Serial.print(F(" * DMX: ")); Serial.println(dmxChannel);
 
-	if (c == 883) {
+	if (c == 883) {		// Ctrl + ESC
 		//  Windows key pressed. Access mapping
 		mapping_keys ();
 	}else{
@@ -80,28 +80,26 @@ void mapping_keys () {
 	// Procedure:
 
 	// First type a key
-	Serial.print(F("Type a key to remap_ "));
+	Serial.print(F("\nPress a keycode to remap: "));
 	while (!keyboard.available()) {
 	}
-	char key_index = keyboard.read();
-	Serial.print(F(" Key pressed: "));
-	Serial.write(key_index);
-	Serial.println(F(" "));
+	unsigned long key_index = keyboard.read();
+	Serial.println(key_index);
 
 	unsigned int record_value = read_record(key_index);
 	if (record_value == 255) {
 		Serial.println(F("Mapping it's empty "));
 	}else{
-		Serial.print(F("Previous mapped function was: "));
+		Serial.print(F("Previous mapped DMX channel was: "));
 		Serial.println (record_value);
 	}
 	// Assign a function
-	Serial.print(F("Type new function number to map and press enter: "));
+	Serial.print(F("Type new DMX channel number and press enter: "));
 	unsigned int new_function = (get_number_serial ());
 	Serial.println(new_function);
 	// Record new function into EEPROM memory
 	write_record (key_index, new_function);
-	Serial.print(F("Recorded! "));
+	Serial.println(F("Recorded! \n"));
 
 
 }
@@ -115,9 +113,143 @@ void Send_DMX_Function (unsigned int function) {
 
 
 void Debug (unsigned int bufferContainer) {
-	Serial.print ("Debug: ");
+	Serial.print (F("Debug: "));
 	Serial.println (bufferContainer);
 }
+
+
+unsigned int get_number_serial () {
+	Serial.flush ();
+	const int buf = 6;
+	char serial_data[buf];
+	recevie_data (serial_data,buf);
+	char * thisChar = serial_data;
+	// Serial.println (atoi(thisChar));
+	return atoi(thisChar);
+}
+
+
+boolean recevie_data (char* parameter_container,int buffer) {
+	// first clean data
+	int len = buffer;
+	for (int c = 0; c < len; c++) {
+		parameter_container[c] = 0;
+	}
+
+	while (true) {
+		// In case we receive serial input
+		if (Serial.available()) {
+			char c = (char) Serial.read();
+			//Serial.print (Serial.read()); // JUST for debug
+			if ((c == 13) || (c == 10)) { 	// begining or end of command
+				//end
+				if (strlen(parameter_container) > 0) {	// We have to receive something first
+					parameter_container[strlen(parameter_container)] = '\0';
+					return true;
+				}
+			}else{
+				if (strlen(parameter_container) == buffer ) {
+					// Serial.println (" Reached the data max lengh, we reset the tag" );
+					// Error!! buffer overload
+					return false;
+				}else{
+					// DATA comes here
+					// Serial.print (c);
+					parameter_container[strlen(parameter_container)]=c;
+					// DEBUG IP
+				}
+			}
+		}
+
+		// in case the input is from the same keyboard
+		if (keyboard.available()) {
+    		// read the next key
+    		unsigned long c = keyboard.read();
+			char received_num = 0;
+
+			if (strlen(parameter_container) == buffer ) {
+					// Serial.println (" Reached the data max lengh, we reset the tag" );
+					// Error!! buffer overload
+					return false;
+			}
+
+			if (c==90) {
+				return true;
+			} else {
+				if (c == 22 || c == 105) { //1
+					received_num = '1';
+				}
+				if (c == 30 || c == 114) { //2
+					received_num = '2';
+				}
+				if (c == 38 || c == 122) { //3
+					received_num = '3';
+				}
+				if (c == 37 || c == 107) { //4
+					received_num = '4';
+				}
+				if (c == 46 || c == 115) { //5
+					received_num = '5';
+				}
+				if (c == 54 || c == 116) { //6
+					received_num = '6';
+				}
+				if (c == 61 || c == 108) { //7
+					received_num = '7';
+				}
+				if (c == 62 || c == 117) { //8
+					received_num = '8';
+				}
+				if (c == 70 || c == 125) { //9
+					received_num = '9';
+				}
+				if (c == 79 || c == 112) { //0
+					received_num = '0';
+				}
+
+				if (received_num != 0) {
+					parameter_container[strlen(parameter_container)]=received_num;
+				}
+			}
+		}				
+	}
+}
+
+// Keycodes for numbers:
+
+/*
+
+Main keyboard
+1 - 22
+2 - 30
+3 - 38
+4 - 37
+5 - 46
+6 - 54
+7 - 61
+8 - 62
+9 - 70
+0 - 69
+enter - 90
+
+keypad
+1 - 105
+2 - 114
+3 - 122
+4 - 107
+5 - 115
+6 - 116
+7 - 108
+8 - 117
+9 - 125
+0 - 112
+enter - 90
+
+
+*/
+
+
+
 
 void print_list_of_functions () {
 // Available functions
@@ -390,48 +522,3 @@ void print_list_of_functions () {
 #define V8		128
 #define V9		129
 #define V10		130
-
-
-
-unsigned int get_number_serial () {
-	Serial.flush ();
-	const int buf = 6;
-	char serial_data[buf];
-	recevie_data (serial_data,buf);
-	char * thisChar = serial_data;
-	// Serial.println (atoi(thisChar));
-	return atoi(thisChar);
-}
-
-boolean recevie_data (char* parameter_container,int buffer) {
-	// first clean data
-	int len = buffer;
-	for (int c = 0; c < len; c++) {
-		parameter_container[c] = 0;
-	}
-
-	while (true) {
-		while (Serial.available()) {
-			char c = (char) Serial.read();
-			//Serial.print (Serial.read()); // JUST for debug
-			if ((c == 13) || (c == 10)) { 	// begining or end of command
-				//end
-				if (strlen(parameter_container) > 0) {	// We have to receive something first
-					parameter_container[strlen(parameter_container)] = '\0';
-					return true;
-				}
-			}else{
-					if (strlen(parameter_container) == buffer ) {
-					// Serial.println (" Reached the data max lengh, we reset the tag" );
-					// Error!! buffer overload
-					return false;
-				}else{
-					// DATA comes here
-					// Serial.print (c);
-					parameter_container[strlen(parameter_container)]=c;
-					// DEBUG IP
-				}
-			}
-		}
-	}
-}
