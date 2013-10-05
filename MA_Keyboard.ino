@@ -38,7 +38,7 @@ void setup() {
   delay(1000);
   keyboard.begin(DataPin, IRQpin);
   Serial.begin(9600);
-  Serial.println("MA Keyboard V0.3");
+  Serial.println("MA Keyboard V0.4");
   init_DBs ();
   setup_artnet ();
   //Show_all_records();
@@ -46,21 +46,28 @@ void setup() {
 }
 
 void loop() {
-  if (keyboard.available()) {
-    
+  
+  if (keyboard.key_released_available()) {
+  	// read released key
+    unsigned long c = keyboard.read_released();
+    Serial.print(F("Key Released: ")); Serial.println(c);
+    unsigned long dmxChannel = read_record(c);
+    artnet_buffer_off (dmxChannel);
+
+  } else if (keyboard.available()) {
     // read the next key
     unsigned long c = keyboard.read();
-    unsigned long record_value = read_record(c);
+    unsigned long dmxChannel = read_record(c);
 
-	Serial.print(F("Ascii Key Pressed: ")); Serial.print(c); Serial.print(F(" = ")); Serial.write(c);Serial.print(F(" = ")); Serial.print(c,HEX);  		// Add print of the ascii letter to verify
-	Serial.print(F(" * Attached function: ")); Serial.println(record_value);
+	Serial.print(F("Key Pressed: ")); Serial.print(c); Serial.print(F(" = ")); Serial.write(c);Serial.print(F(" = ")); Serial.print(c,HEX);  		// Add print of the ascii letter to verify
+	Serial.print(F(" * Attached function DMX: ")); Serial.println(dmxChannel);
 
-	if (c == 96) {
+	if (c == 883) {
 		//  Windows key pressed. Access mapping
 		mapping_keys ();
 	}else{
 		// Send artnet channel coresponding to S
-		artnet_buffer (record_value);
+		artnet_buffer_on (dmxChannel);
 	}
   }
 
@@ -90,7 +97,7 @@ void mapping_keys () {
 	}
 	// Assign a function
 	Serial.print(F("Type new function number to map and press enter: "));
-	unsigned int new_function = get_number_serial ();
+	unsigned int new_function = (get_number_serial ());
 	Serial.println(new_function);
 	// Record new function into EEPROM memory
 	write_record (key_index, new_function);

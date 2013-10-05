@@ -72,16 +72,22 @@ void loop_artnet() {
    Udp.write(ArtDmxBuffer,(art_net_header_size+number_of_channels+1)); // was Udp.sendPacket
    Udp.endPacket();
 
-   clear_artnet_buffer ();
+   //clear_artnet_buffer ();
 
-   delay (30);
+   // delay (20);
 
 }
 
-void artnet_buffer(int dmx_channel)
+void artnet_buffer_on(int dmx_channel)
 {
   // Build arduino bufffer
-  buffer_dmx[dmx_channel]=byte(255);
+  buffer_dmx[dmx_channel-1]=byte(255);
+}
+
+void artnet_buffer_off(int dmx_channel)
+{
+  // Build arduino bufffer
+  buffer_dmx[dmx_channel-1]=byte(0);
 }
 
 
