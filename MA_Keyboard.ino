@@ -1,7 +1,13 @@
 /*  // MA Keyboard testing
-  
-  PS2Keyboard now requries both pins specified for begin()
 
+Author: Doctor Bit
+http://www.drbit.nl
+https://github.com/DrBit/MA_keyboard
+
+This sketch implements the basic functionality to use a standard PS2 Keyboard to send
+Arnet trough a network to interface with Grand MA2 onPC
+
+The basic use is to have a standard PS2 Keyboard attached to Arduino uno and translate each single keycode into Art-Net pakets and broadcast them trough ethernet into a network.
   keyboard.begin(data_pin, irq_pin);
   
   Valid irq pins:
@@ -15,7 +21,14 @@
      Teensy++ 1.0: 0, 1, 2, 3, 18, 19, 36, 37
      Sanguino:     2, 10, 11
   
-  for more information you can read the original wiki in arduino.cc
+
+  Based on previous work of:
+
+  Art-Net Sender:
+  (c)Christoph Guillermet
+  http://www.le-chat-noir-numerique.fr
+
+  Keyboard PS2 Library:
   at http://www.arduino.cc/playground/Main/PS2Keyboard
   or http://www.pjrc.com/teensy/td_libs_PS2Keyboard.html
   
@@ -38,11 +51,14 @@ void setup() {
   delay(1000);
   keyboard.begin(DataPin, IRQpin);
   Serial.begin(9600);
-  Serial.println("MA Keyboard V0.5");
+  Serial.println("MA Keyboard V0.6");
+
   init_DBs ();
   setup_artnet ();
   //Show_all_records();
   Serial.println("Press Ctrol + ESC Key to access mapping functions\n");
+  //Serial.println("Press Ctrol + F1 Key to change artnet universe\n");
+  //Serial.println("Press Ctrol + F2 Key to access device IP\n");
 }
 
 void loop() {

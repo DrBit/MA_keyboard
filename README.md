@@ -1,7 +1,7 @@
 MA_keyboard
 ===========
 
-This file descrives the basic functionality of the Arduino PS2 Keyboard Arnet Sender for Grand MA2
+This file describes the basic functionality of the Arduino PS2 Keyboard Arnet Sender for Grand MA2
 
 The basic use is to have a standard PS2 Keyboard attached to `Arduino uno` and translate each single keycode into `Art-Net` pakets and broadcast them trough ethernet into a network.
 
@@ -49,7 +49,7 @@ Right now when pressing the key we just maped we will se 255 bit information on 
 As for now all channels are broadcasted into the univers 0 subnet 0. Future releases of the code will make abailable the selection of the universe without the need of complile the code.
 
 
-USE
+Use
 ===
 
 Now be sure that you have GrandMA software listening on Art-Net and just add as many input remotes as you want.
@@ -57,3 +57,4 @@ Now be sure that you have GrandMA software listening on Art-Net and just add as 
 Check [MA Share] (http://MA-share.net) for further information on how to configure Grand MA software to receive Art-Net commands.
 
 When having `2port node` in the same network check that `MA onPC` has been correctly detected. Typing `ver` in the command line you will see if there are parameters count. Remember to create session or no data will be getting in MA2.
+
