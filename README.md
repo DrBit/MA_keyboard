@@ -3,7 +3,8 @@ MA_keyboard
 
 This file descrives the basic functionality of the Arduino PS2 Keyboard Arnet Sender for Grand MA2
 
-The basic use is to have a standard PS2 Keyboard attacehd to arduino and translate each single keycode into `Art-Net` pakets and broadcast them trough the arduino ethernet into a network.
+The basic use is to have a standard PS2 Keyboard attached to `Arduino uno` and translate each single keycode into `Art-Net` pakets and broadcast them trough ethernet into a network.
+
 
 Circuit
 =======
@@ -11,6 +12,7 @@ Circuit
 The hardware connection can be seen in this picture:
 
 ![Arduino Connections](/ps2keyboard_schematic.png "Arduino Connections")
+----------
 ![PS2 Pins](/PS2-pinout.jpg "PS2 Pins")
 
 Pin 3 of `Arduino uno` is used for the IRQ (Clock). That's the default on Arduino UNO. Other devices might use other pins:
@@ -47,12 +49,11 @@ Right now when pressing the key we just maped we will se 255 bit information on 
 As for now all channels are broadcasted into the univers 0 subnet 0. Future releases of the code will make abailable the selection of the universe without the need of complile the code.
 
 
-
 USE
 ===
 
 Now be sure that you have GrandMA software listening on Art-Net and just add as many input remotes as you want.
 
-Check [MA Share] (http://MA-share.net) for surther information on how to configure Grand MA software to receive Art-Net commands.
+Check [MA Share] (http://MA-share.net) for further information on how to configure Grand MA software to receive Art-Net commands.
 
-When having `2port node` in the same network check that `MA onPC` has been correctly detected. Typing `ver` in the command line you will se if there is parameter count. Remember to create session or no data will be getting in MA2
+When having `2port node` in the same network check that `MA onPC` has been correctly detected. Typing `ver` in the command line you will see if there are parameters count. Remember to create session or no data will be getting in MA2.
