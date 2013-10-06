@@ -53,4 +53,6 @@ USE
 
 Now be sure that you have GrandMA software listening on Art-Net and just add as many input remotes as you want.
 
-Check [MA Share] http://MA-share.net
+Check [MA Share] (http://MA-share.net) for surther information on how to configure Grand MA software to receive Art-Net commands.
+
+When having `2port node` in the same network check that `MA onPC` has been correctly detected. Typing `ver` in the command line you will se if there is parameter count. Remember to create session or no data will be getting in MA2
