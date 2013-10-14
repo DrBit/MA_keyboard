@@ -219,7 +219,7 @@ boolean recevie_data (char* parameter_container,int buffer) {
 				if (c == 70 || c == 125) { //9
 					received_num = '9';
 				}
-				if (c == 79 || c == 112) { //0
+				if (c == 69 || c == 112) { //0
 					received_num = '0';
 				}
 
