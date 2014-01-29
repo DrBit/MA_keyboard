@@ -36,6 +36,11 @@ The basic use is to have a standard PS2 Keyboard attached to Arduino uno and tra
 */
 
 
+/* 
+
+In order to be able to store 1000 entries in the EPROOM DB library has been modified slightly
+*/
+
 
 // Publicar a Drbit i vendre kits
 
@@ -51,15 +56,19 @@ void setup() {
   delay(1000);
   keyboard.begin(DataPin, IRQpin);
   Serial.begin(9600);
-  Serial.println("MA Keyboard V0.6");
+  Serial.println("MA Keyboard V1");
 
   init_DBs ();
   setup_artnet ();
-  //Show_all_records();
+  Show_all_records();
   Serial.println("Press Ctrol + ESC Key to access mapping functions\n");
   //Serial.println("Press Ctrol + F1 Key to change artnet universe\n");
   //Serial.println("Press Ctrol + F2 Key to access device IP\n");
 }
+
+#define BUFFER_SIZE1 5			// Number of scancodes that can be recorded
+static volatile uint16_t pressed1[BUFFER_SIZE1];	// Buffer for the pressed scancodes
+
 
 void loop() {
   
@@ -74,6 +83,13 @@ void loop() {
     // read the next key
     unsigned long c = keyboard.read();
     unsigned long dmxChannel = read_record(c);
+	
+	Serial.print(F("* Buffer size is: ")); Serial.println(keyboard.positions_buffer ());	// prints the size of the buffer
+
+    if (!c) {		// In case we have key available but read function returns empty '\0' means buffer is full
+    	Serial.print(F("* buffer pressed Keys Full, ERROR! "));
+    	while (true) {}
+    }
 
 	Serial.print(F("* Keycode Pressed: ")); Serial.print(c); Serial.print(F(" * HEX = ")); Serial.print(c,HEX);  		// Add print of the ascii letter to verify
 	Serial.print(F(" * DMX: ")); Serial.println(dmxChannel);
@@ -400,6 +416,7 @@ void print_list_of_functions () {
 	Serial.println (F("V8 - 128"));
 	Serial.println (F("V9 - 129"));
 	Serial.println (F("V10 - 130"));
+	Serial.println (F("LIST - 131"));
 }
 
 

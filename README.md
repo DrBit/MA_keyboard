@@ -58,3 +58,6 @@ Check [MA Share] (http://MA-share.net) for further information on how to configu
 
 When having `2port node` in the same network check that `MA onPC` has been correctly detected. Typing `ver` in the command line you will see if there are parameters count. Remember to create session or no data will be getting in MA2.
 
+Example of MA2onPC configuration:
+![MA2onPC Remote Input Configuration](/MA2_remote_input.png "MA2 Remote inputs")
+
