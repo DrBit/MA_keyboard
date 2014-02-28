@@ -1,5 +1,5 @@
-MA_keyboard (http://blog.drbit.nl/2013/10/arduino-artnet-keyboard-ps2-for-grand-ma2/)
-===========
+(MA_keyboard) (http://blog.drbit.nl/2013/10/arduino-artnet-keyboard-ps2-for-grand-ma2/)
+=============
 
 This file describes the basic functionality of the Arduino PS2 Keyboard Arnet Sender for Grand MA2. The code is part of a bigger project descrived in my own blog [Arduino Artnet sender keyboard for MA2] (http://blog.drbit.nl/2013/10/arduino-artnet-keyboard-ps2-for-grand-ma2/)
 
