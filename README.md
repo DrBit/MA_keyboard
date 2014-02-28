@@ -1,7 +1,7 @@
 MA_keyboard
 ===========
 
-This file describes the basic functionality of the Arduino PS2 Keyboard Arnet Sender for Grand MA2
+This file describes the basic functionality of the Arduino PS2 Keyboard Arnet Sender for Grand MA2. The code is part of a bigger project descrived in my own blog [Arduino Artnet sender keyboard for MA2] (http://blog.drbit.nl/2013/10/arduino-artnet-keyboard-ps2-for-grand-ma2/)
 
 The basic use is to have a standard PS2 Keyboard attached to `Arduino uno` and translate each single keycode into `Art-Net` pakets and broadcast them trough ethernet into a network.
 
