@@ -3,7 +3,7 @@
 
 This file describes the basic functionality of the Arduino PS2 Keyboard Arnet Sender for Grand MA2. The code is part of a bigger project descrived in my own blog [Arduino Artnet sender keyboard for MA2] (http://blog.drbit.nl/2013/10/arduino-artnet-keyboard-ps2-for-grand-ma2/)
 
-The basic use is to have a standard PS2 Keyboard attached to `Arduino uno` and translate each single keycode into `Art-Net` pakets and broadcast them trough ethernet into a network.
+The basic use is to have a standard PS2 Keyboard attached to `Arduino uno` and translate each single keycode into `Art-Net pakets` and broadcast them trough ethernet into a network with lighting especific software `grand MA2`.
 
 
 Circuit
@@ -28,7 +28,7 @@ Pin 3 of `Arduino uno` is used for the IRQ (Clock). That's the default on Arduin
     Teensy++ 1.0: 0, 1, 2, 3, 18, 19, 36, 37
     Sanguino:     2, 10, 11
 
-Pin 5 on `Arduino uno` is atached to the data pin of the PS2 connector. You can use other pins instead when changing acordingly the pin in the source code.
+Pin 5 on `Arduino uno` is attached to the data pin of the PS2 connector. You can use other pins instead when changing acordingly the pin in the source code.
 
     const int DataPin = 5;
 
