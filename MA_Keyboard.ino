@@ -44,67 +44,105 @@ In order to be able to store 1000 entries in the EPROOM DB library has been modi
 
 // Publicar a Drbit i vendre kits
 
+#define Serial_debug	// Enables serial debugging when not commented (improves speed when not enabled)	
    
 #include <PS2Keyboard.h>
 
 const int DataPin = 5;
 const int IRQpin =  3;
+const byte DmxRefresh = 50;	// in Hz
+unsigned int interval = 1000 / DmxRefresh;
+unsigned long previousMillis = 0;
 
 PS2Keyboard keyboard;
 
 void setup() {
-  delay(1000);
-  keyboard.begin(DataPin, IRQpin);
-  Serial.begin(9600);
-  Serial.println("MA Keyboard V1");
-
-  init_DBs ();
-  setup_artnet ();
-  Show_all_records();
-  Serial.println("Press Ctrol + ESC Key to access mapping functions\n");
-  //Serial.println("Press Ctrol + F1 Key to change artnet universe\n");
-  //Serial.println("Press Ctrol + F2 Key to access device IP\n");
+	delay(1000);
+	keyboard.begin(DataPin, IRQpin);
+	#if defined Serial_debug
+		Serial.begin(9600);
+		Serial.println(F("MA Keyboard V1.1"));
+	#endif
+	init_DBs ();
+	setup_artnet ();
+	Serial.println (freeRam ());
+	//Show_all_records();
+	Serial.println("Press Ctrol + ESC Key to access mapping functions\n");
+	//Serial.println("Press Ctrol + F1 Key to change artnet universe\n");
+	//Serial.println("Press Ctrol + F2 Key to access device IP\n");
+	//Serial.println("Press Ctrol + F3 Key to change DMX refreshrate (default 50Hz)\n");
 }
 
-#define BUFFER_SIZE1 5			// Number of scancodes that can be recorded
-static volatile uint16_t pressed1[BUFFER_SIZE1];	// Buffer for the pressed scancodes
+// Load all records into memory to speed up the procees (reading from EEPROM is slow)
 
 
 void loop() {
-  
-  if (keyboard.key_released_available()) {
-  	// read released key
-    unsigned long c = keyboard.read_released();
-    Serial.print(F("Key Released: ")); Serial.println(c);
-    unsigned long dmxChannel = read_record(c);
-    artnet_buffer_off (dmxChannel);
 
-  } else if (keyboard.available()) {
-    // read the next key
-    unsigned long c = keyboard.read();
-    unsigned long dmxChannel = read_record(c);
-	
-	Serial.print(F("* Buffer size is: ")); Serial.println(keyboard.positions_buffer ());	// prints the size of the buffer
+	if (keyboard.available()) {
+		if (keyboard.key_pressed_available()) {
+			// read the next pressed key
+			unsigned long c = keyboard.read();
+			unsigned long dmxChannel = read_record(c);
 
-    if (!c) {		// In case we have key available but read function returns empty '\0' means buffer is full
-    	Serial.print(F("* buffer pressed Keys Full, ERROR! "));
-    	while (true) {}
-    }
+			#if defined Serial_debug
+			Serial.print(F("* Buffer size is: ")); Serial.println(keyboard.positions_buffer ());	// prints the size of the buffer
+			#endif
 
-	Serial.print(F("* Keycode Pressed: ")); Serial.print(c); Serial.print(F(" * HEX = ")); Serial.print(c,HEX);  		// Add print of the ascii letter to verify
-	Serial.print(F(" * DMX: ")); Serial.println(dmxChannel);
+			if (!c) {		// In case we have key available but read function returns empty '\0' means buffer is full
+				#if defined Serial_debug
+				Serial.print(F("* buffer pressed Keys Full, ERROR! "));
+				#endif
+				while (true) {}
+			}
 
-	if (c == 883) {		// Ctrl + ESC
-		//  Windows key pressed. Access mapping
-		mapping_keys ();
-	}else{
-		// Send artnet channel coresponding to S
-		artnet_buffer_on (dmxChannel);
+			#if defined Serial_debug
+			Serial.print(F("* Keycode Pressed: ")); Serial.print(c); Serial.print(F(" * HEX = ")); Serial.print(c,HEX);  		// Add print of the ascii letter to verify
+			Serial.print(F(" * DMX: ")); Serial.println(dmxChannel);
+			#endif
+
+			if (c == 883) {		// Ctrl + ESC
+				//  Windows key pressed. Access mapping
+				mapping_keys ();
+			}else{
+				// Send artnet channel coresponding to S
+				artnet_buffer_on (dmxChannel);
+			}
+		}
+
+		if (keyboard.key_released_available()) {
+			// read released key
+			unsigned long c = keyboard.read_released();
+			#if defined Serial_debug
+			Serial.print(F("Key Released: ")); Serial.println(c);
+			Serial.print(F("* Buffer size is: ")); Serial.println(keyboard.positions_buffer ());
+			#endif
+			// To speed up the process we should read all the eeprom into memory.
+			// timing the function:
+			unsigned long m1 = micros(); 
+			unsigned long m2 = micros(); 
+			unsigned long mt = m2 - m1;		// Mt equals the time of the micros function itself and has to be removed for a better acuracy
+
+			unsigned long start = micros();
+			//unsigned long dmxChannel = 10; // testing only
+			unsigned long dmxChannel = read_record(c);
+			// Compute the time it took
+			unsigned long end = micros();
+			unsigned long delta = end - start-mt;
+			Serial.print(F("Time in Micorseconds read from eeprom: ")); Serial.println(delta);
+
+			artnet_buffer_off (dmxChannel);
+		}
 	}
-  }
 
-  // Artnet handling
-  loop_artnet();
+  	// Artnet handling we will do it at (default) 50Hz
+	unsigned long currentMillis = millis();
+	if(currentMillis - previousMillis > interval) {
+		// save the last time you blinked the LED 
+		previousMillis = currentMillis;   
+		loop_artnet();
+		// Serial.println (freeRam ());
+
+	}  
 }
 
 void mapping_keys () {
@@ -112,7 +150,9 @@ void mapping_keys () {
 	// Procedure:
 
 	// First type a key
+	#if defined Serial_debug
 	Serial.print(F("\nPress a keycode to remap: "));
+	#endif
 	while (!keyboard.available()) {
 	}
 	unsigned long key_index = keyboard.read();
@@ -120,18 +160,26 @@ void mapping_keys () {
 
 	unsigned int record_value = read_record(key_index);
 	if (record_value == 255) {
+		#if defined Serial_debug
 		Serial.println(F("Mapping it's empty "));
+		#endif
 	}else{
+		#if defined Serial_debug
 		Serial.print(F("Previous mapped DMX channel was: "));
+		#endif
 		Serial.println (record_value);
 	}
 	// Assign a function
+	#if defined Serial_debug
 	Serial.print(F("Type new DMX channel number and press enter: "));
+	#endif
 	unsigned int new_function = (get_number_serial ());
 	Serial.println(new_function);
 	// Record new function into EEPROM memory
 	write_record (key_index, new_function);
+	#if defined Serial_debug
 	Serial.println(F("Recorded! \n"));
+	#endif
 
 
 }
@@ -145,7 +193,9 @@ void Send_DMX_Function (unsigned int function) {
 
 
 void Debug (unsigned int bufferContainer) {
+	#if defined Serial_debug
 	Serial.print (F("Debug: "));
+	#endif
 	Serial.println (bufferContainer);
 }
 
@@ -246,6 +296,14 @@ boolean recevie_data (char* parameter_container,int buffer) {
 		}				
 	}
 }
+
+int freeRam () 
+{
+ extern int __heap_start, *__brkval; 
+ int v; 
+ return (int) &v - (__brkval == 0 ? (int) &__heap_start : (int) __brkval); 
+}
+
 
 // Keycodes for numbers:
 

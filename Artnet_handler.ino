@@ -35,7 +35,7 @@ byte destination_Ip[]= {   255,255,255,255 };        // the ip to send data, 255
 // art net parameters
 unsigned int localPort = 6454;      // artnet UDP port is by default 6454
 const int DMX_Universe=0;//universe is from 0 to 15, subnet is not used
-const int number_of_channels=512; //512 for 512 channels, MAX=512
+const int number_of_channels=226; //512 for 512 channels, MAX=512
 
 //HARDWARE
 byte mac[] = {  144, 162, 218, 00, 16, 96  };//the mac adress of ethernet shield or uno shield board
