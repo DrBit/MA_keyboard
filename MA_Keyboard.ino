@@ -50,9 +50,10 @@ In order to be able to store 1000 entries in the EPROOM DB library has been modi
 
 const int DataPin = 5;
 const int IRQpin =  3;
-const byte DmxRefresh = 50;	// in Hz
+const byte DmxRefresh = 50;	// Maximum refresh rate in Hz  (If there is no information to send the refreshrate will be 0)
 unsigned int interval = 1000 / DmxRefresh;
 unsigned long previousMillis = 0;
+boolean Artnet_falg = false;
 
 PS2Keyboard keyboard;
 
@@ -60,8 +61,8 @@ void setup() {
 	delay(1000);
 	keyboard.begin(DataPin, IRQpin);
 	#if defined Serial_debug
-		Serial.begin(9600);
-		Serial.println(F("MA Keyboard V1.1"));
+		Serial.begin(57600);
+		Serial.println(F("MA Keyboard V1.2"));
 	#endif
 	init_DBs ();
 	setup_artnet ();
@@ -77,7 +78,6 @@ void setup() {
 
 
 void loop() {
-
 	if (keyboard.available()) {
 		if (keyboard.key_pressed_available()) {
 			// read the next pressed key
@@ -106,6 +106,7 @@ void loop() {
 			}else{
 				// Send artnet channel coresponding to S
 				artnet_buffer_on (dmxChannel);
+				Artnet_falg = true;
 			}
 		}
 
@@ -131,18 +132,22 @@ void loop() {
 			Serial.print(F("Time in Micorseconds read from eeprom: ")); Serial.println(delta);
 
 			artnet_buffer_off (dmxChannel);
+			Artnet_falg = true;
 		}
 	}
 
-  	// Artnet handling we will do it at (default) 50Hz
-	unsigned long currentMillis = millis();
-	if(currentMillis - previousMillis > interval) {
-		// save the last time you blinked the LED 
-		previousMillis = currentMillis;   
-		loop_artnet();
-		// Serial.println (freeRam ());
+	if (Artnet_falg) {
+	  	// Artnet handling we will do it at (default) 50Hz
+		unsigned long currentMillis = millis();
+		if(currentMillis - previousMillis > interval) {
+			// save the last time you blinked the LED 
+			previousMillis = currentMillis;   
+			loop_artnet();
+			Artnet_falg = false;
+			Serial.println (freeRam ());
 
-	}  
+		}
+	}
 }
 
 void mapping_keys () {
