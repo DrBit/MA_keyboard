@@ -37,12 +37,8 @@ The basic use is to have a standard PS2 Keyboard attached to Arduino uno and tra
 
 
 /* 
-
 In order to be able to store 1000 entries in the EPROOM DB library has been modified slightly
 */
-
-
-// Publicar a Drbit i vendre kits
 
 #define Serial_debug	// Enables serial debugging when not commented (improves speed when not enabled)	
    
@@ -62,26 +58,23 @@ void setup() {
 	keyboard.begin(DataPin, IRQpin);
 	#if defined Serial_debug
 		Serial.begin(57600);
-		Serial.println(F("MA Keyboard V1.2"));
+		Serial.println(F("MA Keyboard V1.1.1"));
 	#endif
 	init_DBs ();
 	setup_artnet ();
 	Serial.println (freeRam ());
-	//Show_all_records();
+	//Show_all_records();		// Shows all recorded records in the EEPROM
 	Serial.println("Press Ctrol + ESC Key to access mapping functions\n");
 	//Serial.println("Press Ctrol + F1 Key to change artnet universe\n");
 	//Serial.println("Press Ctrol + F2 Key to access device IP\n");
 	//Serial.println("Press Ctrol + F3 Key to change DMX refreshrate (default 50Hz)\n");
 }
 
-// Load all records into memory to speed up the procees (reading from EEPROM is slow)
-
 
 void loop() {
 	if (keyboard.available()) {
 		if (keyboard.key_pressed_available()) {
-			// read the next pressed key
-			unsigned long c = keyboard.read();
+			unsigned long c = keyboard.read();			// read the next pressed key
 			unsigned long dmxChannel = read_record(c);
 
 			#if defined Serial_debug
@@ -100,93 +93,73 @@ void loop() {
 			Serial.print(F(" * DMX: ")); Serial.println(dmxChannel);
 			#endif
 
-			if (c == 883) {		// Ctrl + ESC
-				//  Windows key pressed. Access mapping
-				mapping_keys ();
-			}else{
-				// Send artnet channel coresponding to S
+			if (c == 883) {				// Ctrl + ESC Access key mapping
+				#if defined Serial_debug
+				Serial.print(F("\nEntering Key Mapping"));
+				#endif
+				mapping_keys ();		
+			}else if (c == 770) {		// Ctrl + F1 Key to change artnet universe
+				#if defined Serial_debug
+				Serial.print(F("\nChange Artnet Universe (default 100)"));
+				#endif						
+			}else if (c == 771) {		// Ctrl + F2 Key to access device IP
+				#if defined Serial_debug
+				Serial.print(F("\nChange IP"));
+				#endif						
+			}else if (c == 769) {		// Ctrl + F3 F3 Key to change DMX refreshrate (default 50Hz)
+				#if defined Serial_debug
+				Serial.print(F("\nChange DMX refreshrate (default 50)"));
+				#endif						
+			}else{						// Send artnet channel coresponding to S
 				artnet_buffer_on (dmxChannel);
 				Artnet_falg = true;
 			}
 		}
 
 		if (keyboard.key_released_available()) {
-			// read released key
-			unsigned long c = keyboard.read_released();
-			#if defined Serial_debug
+			unsigned long c = keyboard.read_released();		// read released key
+			#if defined Serial_debug						// Debug info
 			Serial.print(F("Key Released: ")); Serial.println(c);
 			Serial.print(F("* Buffer size is: ")); Serial.println(keyboard.positions_buffer ());
 			#endif
-			// To speed up the process we should read all the eeprom into memory.
-			// timing the function:
-			unsigned long m1 = micros(); 
-			unsigned long m2 = micros(); 
-			unsigned long mt = m2 - m1;		// Mt equals the time of the micros function itself and has to be removed for a better acuracy
-
-			unsigned long start = micros();
-			//unsigned long dmxChannel = 10; // testing only
-			unsigned long dmxChannel = read_record(c);
-			// Compute the time it took
-			unsigned long end = micros();
-			unsigned long delta = end - start-mt;
-			Serial.print(F("Time in Micorseconds read from eeprom: ")); Serial.println(delta);
-
-			artnet_buffer_off (dmxChannel);
-			Artnet_falg = true;
+			// To speed up the process we should read all the eeprom into memory. But we dont have enoug SDRAM, we need 1000 and we get 950
+			unsigned long dmxChannel = read_record(c);		// Read channel to switch off from EEPROM
+			artnet_buffer_off (dmxChannel);					// Update DMX data
+			Artnet_falg = true;								// Flag DMX transmit, when aailable will be transmitted
 		}
 	}
 
-	if (Artnet_falg) {
-	  	// Artnet handling we will do it at (default) 50Hz
+	if (Artnet_falg) {		// Artnet handling we will do it at (default) 50Hz
 		unsigned long currentMillis = millis();
 		if(currentMillis - previousMillis > interval) {
-			// save the last time you blinked the LED 
-			previousMillis = currentMillis;   
+			previousMillis = currentMillis;		// save the last time you blinked the LED 
 			loop_artnet();
 			Artnet_falg = false;
-			Serial.println (freeRam ());
-
 		}
 	}
 }
 
 void mapping_keys () {
 	// When mapping keys what we do is link an ascii key (wich mach the memory position) to a DMX function predefined
-	// Procedure:
 
-	// First type a key
-	#if defined Serial_debug
 	Serial.print(F("\nPress a keycode to remap: "));
-	#endif
-	while (!keyboard.available()) {
+	while (!keyboard.available()) {					// First type a key to remap
 	}
 	unsigned long key_index = keyboard.read();
 	Serial.println(key_index);
 
 	unsigned int record_value = read_record(key_index);
 	if (record_value == 255) {
-		#if defined Serial_debug
 		Serial.println(F("Mapping it's empty "));
-		#endif
 	}else{
-		#if defined Serial_debug
 		Serial.print(F("Previous mapped DMX channel was: "));
-		#endif
 		Serial.println (record_value);
 	}
-	// Assign a function
-	#if defined Serial_debug
-	Serial.print(F("Type new DMX channel number and press enter: "));
-	#endif
+	Serial.print(F("Type new DMX channel number and press enter: "));		// Assign a function
 	unsigned int new_function = (get_number_serial ());
 	Serial.println(new_function);
-	// Record new function into EEPROM memory
-	write_record (key_index, new_function);
-	#if defined Serial_debug
+	write_record (key_index, new_function);			// Record new function into EEPROM memory
 	Serial.println(F("Recorded! \n"));
-	#endif
-
-
 }
 
 //////////////////////// MA FUNCTIONS
@@ -194,8 +167,6 @@ void Send_DMX_Function (unsigned int function) {
 	Debug (function);
 	// Code to send DMX (function)
 }
-
-
 
 void Debug (unsigned int bufferContainer) {
 	#if defined Serial_debug
@@ -302,7 +273,8 @@ boolean recevie_data (char* parameter_container,int buffer) {
 	}
 }
 
-int freeRam () 
+
+int freeRam () 	// Check ram available
 {
  extern int __heap_start, *__brkval; 
  int v; 
@@ -343,7 +315,17 @@ enter - 90
 
 */
 
-
+/*
+// timing the function:
+unsigned long m1 = micros(); 
+unsigned long m2 = micros(); 
+unsigned long mt = m2 - m1;		// Mt equals the time of the micros function itself and has to be removed for a better acuracy
+unsigned long start = micros();
+// order to time
+unsigned long end = micros();
+unsigned long delta = end - start-mt;
+Serial.print(F("Time in Micorseconds read from eeprom: ")); Serial.println(delta);
+*/
 
 
 void print_list_of_functions () {

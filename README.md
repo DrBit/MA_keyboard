@@ -65,8 +65,10 @@ Example of MA2onPC configuration:
 Code Updates
 ============
 
-** 17-06-2014 V1.1 Fixed Bug in wich release keys would be missed and DMX not updated acordingly
-                   Added Max Refresh Rate of the DMX packets (default 50 Hz)
+** 17-06-2014 V1.1 
+* Fixed Bug in wich release keys would be missed and DMX not updated acordingly
+* Added Max Refresh Rate of the DMX packets (default 50 Hz)
 
-** 18-06-2014 V1.1.1 Added function that will only broadcast DMX if there is data available. (Greatly reduces trafic on the network)
-                     Changed Serial transmit rate to 57600 to reduce delay when debugging
+** 18-06-2014 V1.1.1
+* Added function that will only broadcast DMX if there is data available. (Greatly reduces trafic on the network)
+* Changed Serial transmit rate to 57600 to reduce delay when debugging
