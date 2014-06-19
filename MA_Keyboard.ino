@@ -140,7 +140,7 @@ void loop() {
 			}
 		}
 
-	}else if (Artnet_falg) {		// Artnet handling we will do it at (default) 50Hz and only if there is not keys availeble to read
+	}else if ((Artnet_falg) || (millis() - previousMillis > 3000)) {		// If there is data to send but also if for 3 seconds we haven't send anything
 		unsigned long currentMillis = millis();
 		if(currentMillis - previousMillis > interval) {
 			previousMillis = currentMillis;		// save the last time you blinked the LED 

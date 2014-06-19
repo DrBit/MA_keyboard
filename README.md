@@ -78,5 +78,6 @@ Code Updates
 
 ** 19-06-2014 V1.2.1
 * Fixed mapping issues
+* Added refresh every 3 seconds
 
 
