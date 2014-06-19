@@ -75,3 +75,8 @@ Code Updates
 
 ** 18-06-2014 V1.2
 * Fixed bug, when pressing shift or alt and releasing + other keys and then releasing shift first would cause some problems.
+
+** 19-06-2014 V1.2.1
+* Fixed mapping issues
+
+

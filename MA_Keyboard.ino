@@ -58,7 +58,7 @@ void setup() {
 	keyboard.begin(DataPin, IRQpin);
 	#if defined Serial_debug
 		Serial.begin(57600);
-		Serial.println(F("MA Keyboard V1.2"));
+		Serial.println(F("MA Keyboard V1.2.1"));
 	#endif
 	init_DBs ();
 	setup_artnet ();
@@ -76,57 +76,70 @@ void loop() {
 	if (keyboard.available()) {
 		if (keyboard.key_pressed_available()) {
 			unsigned long c = keyboard.read();			// read the next pressed key
-			unsigned long dmxChannel = read_record(c);
 
-			#if defined Serial_debug
-			Serial.print(F("\n* Keycode Pressed: ")); Serial.print(c); Serial.print(F(" * HEX = ")); Serial.print(c,HEX);  		// Add print of the ascii letter to verify
-			Serial.print(F(" * DMX: ")); Serial.print(dmxChannel);
-			Serial.print(F(" - Buffer size is: ")); Serial.println(keyboard.positions_buffer ());	// prints the size of the buffer
-			#endif
+			if ((c == 0x12) || (c == 0x59) || (c == 0x14) || (c == 0x11)) {		// If it is special we debug and ignore
+				Serial.print(F("\n* Special Keycode Pressed: ")); Serial.print(c); Serial.print(F(" * HEX = ")); Serial.print(c,HEX);
+				Serial.print(F(" - Buffer size is: ")); Serial.println(keyboard.positions_buffer ());	// prints the size of the buffer
+			}else{
 
-			if (!c) {		// In case we have key available but read function returns empty '\0' means buffer is full
+				unsigned long dmxChannel = read_record(c);
 				#if defined Serial_debug
-				Serial.print(F("* buffer pressed Keys Full, ERROR! "));
+				Serial.print(F("\n* Keycode Pressed: ")); Serial.print(c); Serial.print(F(" * HEX = ")); Serial.print(c,HEX);  		// Add print of the ascii letter to verify
+				Serial.print(F(" * DMX: ")); Serial.print(dmxChannel);
+				Serial.print(F(" - Buffer size is: ")); Serial.println(keyboard.positions_buffer ());	// prints the size of the buffer
 				#endif
-				while (true) {}
-			}
 
-			if (c == 883) {				// Ctrl + ESC Access key mapping
-				#if defined Serial_debug
-				Serial.print(F("\nEntering Key Mapping"));
-				#endif
-				mapping_keys ();		
-			}else if (c == 770) {		// Ctrl + F1 Key to change artnet universe
-				#if defined Serial_debug
-				Serial.print(F("\nChange Artnet Universe (default 100)"));
-				#endif						
-			}else if (c == 771) {		// Ctrl + F2 Key to access device IP
-				#if defined Serial_debug
-				Serial.print(F("\nChange IP"));
-				#endif						
-			}else if (c == 769) {		// Ctrl + F3 F3 Key to change DMX refreshrate (default 50Hz)
-				#if defined Serial_debug
-				Serial.print(F("\nChange DMX refreshrate (default 50)"));
-				#endif						
-			}else{						// Send artnet channel coresponding to S
-				artnet_buffer_on (dmxChannel);
-				Artnet_falg = true;
+				if (!c) {		// In case we have key available but read function returns empty '\0' means buffer is full
+					#if defined Serial_debug
+					Serial.print(F("* buffer pressed Keys Full, ERROR! "));
+					#endif
+				}
+
+				if (c == 883) {				// Ctrl + ESC Access key mapping
+					#if defined Serial_debug
+					Serial.print(F("\nEntering Key Mapping"));
+					#endif
+					mapping_keys ();		
+				}else if (c == 770) {		// Ctrl + F1 Key to change artnet universe
+					#if defined Serial_debug
+					Serial.print(F("\nChange Artnet Universe (default 100)"));
+					#endif						
+				}else if (c == 771) {		// Ctrl + F2 Key to access device IP
+					#if defined Serial_debug
+					Serial.print(F("\nChange IP"));
+					#endif						
+				}else if (c == 769) {		// Ctrl + F3 F3 Key to change DMX refreshrate (default 50Hz)
+					#if defined Serial_debug
+					Serial.print(F("\nChange DMX refreshrate (default 50)"));
+					#endif						
+				}else{						// Send artnet channel coresponding to S
+					artnet_buffer_on (dmxChannel);
+					Artnet_falg = true;
+				}
 			}
 		}
 
 		if (keyboard.key_released_available()) {
 			uint16_t c = keyboard.read_released();		// read released key
 			if (c != -1) {		// When returns something (in certain situations a key might be releast without being pressed at first time)
-				#if defined Serial_debug						// Debug info
-				Serial.print(F("Key Released: ")); Serial.print(c);
-				Serial.print(F(" - Buffer size is: ")); Serial.println(keyboard.positions_buffer ());
-				#endif
-				// To speed up the process we should read all the eeprom into memory. But we dont have enoug SDRAM, we need 1000 and we get 950
-				unsigned long dmxChannel = read_record(c);		// Read channel to switch off from EEPROM
-				artnet_buffer_off (dmxChannel);					// Update DMX data
-				Artnet_falg = true;								// Flag DMX transmit, when aailable will be transmitted
+				if ((c == 0x12) || (c == 0x59) || (c == 0x14) || (c == 0x11)) {		// If it is special we debug and ignore
+					#if defined Serial_debug						// Debug info
+					Serial.print(F("Special Key Released: ")); Serial.print(c);
+					Serial.print(F(" - Buffer size is: ")); Serial.println(keyboard.positions_buffer ());
+					#endif
+				}else{
+					#if defined Serial_debug						// Debug info
+					Serial.print(F("Key Released: ")); Serial.print(c);
+					Serial.print(F(" - Buffer size is: ")); Serial.println(keyboard.positions_buffer ());
+					#endif
+					// To speed up the process we should read all the eeprom into memory. But we dont have enoug SDRAM, we need 1000 and we get 950
+					unsigned long dmxChannel = read_record(c);		// Read channel to switch off from EEPROM
+					artnet_buffer_off (dmxChannel);					// Update DMX data
+					Artnet_falg = true;								// Flag DMX transmit, when aailable will be transmitted
+				}
 			}
 		}
+
 	}else if (Artnet_falg) {		// Artnet handling we will do it at (default) 50Hz and only if there is not keys availeble to read
 		unsigned long currentMillis = millis();
 		if(currentMillis - previousMillis > interval) {
@@ -137,13 +150,39 @@ void loop() {
 	}
 }
 
+
+boolean received_key_ready () {
+	if (!keyboard.key_pressed_available()) {					// Keep reading keys until we have a new pressed (discard released keys)
+		if (keyboard.available()) {
+			if (keyboard.key_released_available()) {
+				keyboard.read_released();		// read released key and discard
+			}
+		}
+		return false;
+	}else{
+		return true;
+	}
+}
+
+uint16_t receive_next_pressed_key() {		// Bloks
+	unsigned long RKey = 0;
+	while (!received_key_ready()) {					// Keep reading keys until we have a new pressed (discard released keys)
+	}
+
+	RKey = keyboard.read();
+	if ((RKey == 0x12) || (RKey == 0x59) || (RKey == 0x14) || (RKey == 0x11)) return '\0';		// If it is an special key ignore and start from while again
+	if (!RKey) return '\0';			// If it returns nothing the buffer is full
+	return RKey;
+}
+
+
 void mapping_keys () {
 	// When mapping keys what we do is link an ascii key (wich mach the memory position) to a DMX function predefined
 
 	Serial.print(F("\nPress a keycode to remap: "));
-	while (!keyboard.available()) {					// First type a key to remap
-	}
-	unsigned long key_index = keyboard.read();
+	
+	uint16_t key_index = 0;
+	while (!key_index) key_index = receive_next_pressed_key();		// Keeps reading keys until we have a valid one
 	Serial.println(key_index);
 
 	unsigned int record_value = read_record(key_index);
@@ -155,9 +194,9 @@ void mapping_keys () {
 	}
 	Serial.print(F("Type new DMX channel number and press enter: "));		// Assign a function
 	unsigned int new_function = (get_number_serial ());
-	Serial.println(new_function);
 	write_record (key_index, new_function);			// Record new function into EEPROM memory
-	Serial.println(F("Recorded! \n"));
+	Serial.print(F("Recorded! "));
+	Serial.println(new_function);
 }
 
 unsigned int get_number_serial () {
@@ -182,7 +221,7 @@ boolean recevie_data (char* parameter_container,int buffer) {
 		// In case we receive serial input
 		if (Serial.available()) {
 			char c = (char) Serial.read();
-			//Serial.print (Serial.read()); // JUST for debug
+			Serial.print (c); // JUST for debug
 			if ((c == 13) || (c == 10)) { 	// begining or end of command
 				//end
 				if (strlen(parameter_container) > 0) {	// We have to receive something first
@@ -204,54 +243,69 @@ boolean recevie_data (char* parameter_container,int buffer) {
 		}
 
 		// in case the input is from the same keyboard
-		if (keyboard.available()) {
-    		// read the next key
-    		unsigned long c = keyboard.read();
-			char received_num = 0;
+		while (!received_key_ready()) {					// Keep reading keys until we have a new pressed (discard released keys)
+		}
+		// read the next key
+		unsigned long c = keyboard.read();
+		if (!c) {
+			Serial.println(F("No key pressed or key buffer full "));
+			continue;
+		}
+		char received_num = 0;
 
-			if (strlen(parameter_container) == buffer ) {
-					// Serial.println (" Reached the data max lengh, we reset the tag" );
-					// Error!! buffer overload
-					return false;
+		if (strlen(parameter_container) == buffer ) {
+				// Serial.println (" Reached the data max lengh, we reset the tag" );
+				// Error!! buffer overload
+				return false;
+		}
+
+		if (c==90) {
+			Serial.println(' ');
+			return true;
+		} else {
+			if (c == 22 || c == 105) { //1
+				received_num = '1';
+				Serial.print('1');
+			}
+			if (c == 30 || c == 114) { //2
+				received_num = '2';
+				Serial.print('2');
+			}
+			if (c == 38 || c == 122) { //3
+				received_num = '3';
+				Serial.print('3');
+			}
+			if (c == 37 || c == 107) { //4
+				received_num = '4';
+				Serial.print('4');
+			}
+			if (c == 46 || c == 115) { //5
+				received_num = '5';
+				Serial.print('5');
+			}
+			if (c == 54 || c == 116) { //6
+				received_num = '6';
+				Serial.print('6');
+			}
+			if (c == 61 || c == 108) { //7
+				received_num = '7';
+				Serial.print('7');
+			}
+			if (c == 62 || c == 117) { //8
+				received_num = '8';
+				Serial.print('8');
+			}
+			if (c == 70 || c == 125) { //9
+				received_num = '9';
+				Serial.print('9');
+			}
+			if (c == 69 || c == 112) { //0
+				received_num = '0';
+				Serial.print('0');
 			}
 
-			if (c==90) {
-				return true;
-			} else {
-				if (c == 22 || c == 105) { //1
-					received_num = '1';
-				}
-				if (c == 30 || c == 114) { //2
-					received_num = '2';
-				}
-				if (c == 38 || c == 122) { //3
-					received_num = '3';
-				}
-				if (c == 37 || c == 107) { //4
-					received_num = '4';
-				}
-				if (c == 46 || c == 115) { //5
-					received_num = '5';
-				}
-				if (c == 54 || c == 116) { //6
-					received_num = '6';
-				}
-				if (c == 61 || c == 108) { //7
-					received_num = '7';
-				}
-				if (c == 62 || c == 117) { //8
-					received_num = '8';
-				}
-				if (c == 70 || c == 125) { //9
-					received_num = '9';
-				}
-				if (c == 69 || c == 112) { //0
-					received_num = '0';
-				}
-
-				if (received_num != 0) {
-					parameter_container[strlen(parameter_container)]=received_num;
-				}
+			if (received_num != 0) {
+				parameter_container[strlen(parameter_container)]=received_num;
 			}
 		}				
 	}
