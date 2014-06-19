@@ -72,3 +72,6 @@ Code Updates
 ** 18-06-2014 V1.1.1
 * Added function that will only broadcast DMX if there is data available. (Greatly reduces trafic on the network)
 * Changed Serial transmit rate to 57600 to reduce delay when debugging
+
+** 18-06-2014 V1.2
+* Fixed bug, when pressing shift or alt and releasing + other keys and then releasing shift first would cause some problems.

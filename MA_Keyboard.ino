@@ -58,7 +58,7 @@ void setup() {
 	keyboard.begin(DataPin, IRQpin);
 	#if defined Serial_debug
 		Serial.begin(57600);
-		Serial.println(F("MA Keyboard V1.1.1"));
+		Serial.println(F("MA Keyboard V1.2"));
 	#endif
 	init_DBs ();
 	setup_artnet ();
@@ -68,6 +68,7 @@ void setup() {
 	//Serial.println("Press Ctrol + F1 Key to change artnet universe\n");
 	//Serial.println("Press Ctrol + F2 Key to access device IP\n");
 	//Serial.println("Press Ctrol + F3 Key to change DMX refreshrate (default 50Hz)\n");
+	loop_artnet();		// Broatcast and restore all DMX
 }
 
 
@@ -78,7 +79,9 @@ void loop() {
 			unsigned long dmxChannel = read_record(c);
 
 			#if defined Serial_debug
-			Serial.print(F("* Buffer size is: ")); Serial.println(keyboard.positions_buffer ());	// prints the size of the buffer
+			Serial.print(F("\n* Keycode Pressed: ")); Serial.print(c); Serial.print(F(" * HEX = ")); Serial.print(c,HEX);  		// Add print of the ascii letter to verify
+			Serial.print(F(" * DMX: ")); Serial.print(dmxChannel);
+			Serial.print(F(" - Buffer size is: ")); Serial.println(keyboard.positions_buffer ());	// prints the size of the buffer
 			#endif
 
 			if (!c) {		// In case we have key available but read function returns empty '\0' means buffer is full
@@ -87,11 +90,6 @@ void loop() {
 				#endif
 				while (true) {}
 			}
-
-			#if defined Serial_debug
-			Serial.print(F("* Keycode Pressed: ")); Serial.print(c); Serial.print(F(" * HEX = ")); Serial.print(c,HEX);  		// Add print of the ascii letter to verify
-			Serial.print(F(" * DMX: ")); Serial.println(dmxChannel);
-			#endif
 
 			if (c == 883) {				// Ctrl + ESC Access key mapping
 				#if defined Serial_debug
@@ -117,19 +115,19 @@ void loop() {
 		}
 
 		if (keyboard.key_released_available()) {
-			unsigned long c = keyboard.read_released();		// read released key
-			#if defined Serial_debug						// Debug info
-			Serial.print(F("Key Released: ")); Serial.println(c);
-			Serial.print(F("* Buffer size is: ")); Serial.println(keyboard.positions_buffer ());
-			#endif
-			// To speed up the process we should read all the eeprom into memory. But we dont have enoug SDRAM, we need 1000 and we get 950
-			unsigned long dmxChannel = read_record(c);		// Read channel to switch off from EEPROM
-			artnet_buffer_off (dmxChannel);					// Update DMX data
-			Artnet_falg = true;								// Flag DMX transmit, when aailable will be transmitted
+			uint16_t c = keyboard.read_released();		// read released key
+			if (c != -1) {		// When returns something (in certain situations a key might be releast without being pressed at first time)
+				#if defined Serial_debug						// Debug info
+				Serial.print(F("Key Released: ")); Serial.print(c);
+				Serial.print(F(" - Buffer size is: ")); Serial.println(keyboard.positions_buffer ());
+				#endif
+				// To speed up the process we should read all the eeprom into memory. But we dont have enoug SDRAM, we need 1000 and we get 950
+				unsigned long dmxChannel = read_record(c);		// Read channel to switch off from EEPROM
+				artnet_buffer_off (dmxChannel);					// Update DMX data
+				Artnet_falg = true;								// Flag DMX transmit, when aailable will be transmitted
+			}
 		}
-	}
-
-	if (Artnet_falg) {		// Artnet handling we will do it at (default) 50Hz
+	}else if (Artnet_falg) {		// Artnet handling we will do it at (default) 50Hz and only if there is not keys availeble to read
 		unsigned long currentMillis = millis();
 		if(currentMillis - previousMillis > interval) {
 			previousMillis = currentMillis;		// save the last time you blinked the LED 
@@ -161,20 +159,6 @@ void mapping_keys () {
 	write_record (key_index, new_function);			// Record new function into EEPROM memory
 	Serial.println(F("Recorded! \n"));
 }
-
-//////////////////////// MA FUNCTIONS
-void Send_DMX_Function (unsigned int function) {
-	Debug (function);
-	// Code to send DMX (function)
-}
-
-void Debug (unsigned int bufferContainer) {
-	#if defined Serial_debug
-	Serial.print (F("Debug: "));
-	#endif
-	Serial.println (bufferContainer);
-}
-
 
 unsigned int get_number_serial () {
 	Serial.flush ();
