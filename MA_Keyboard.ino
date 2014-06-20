@@ -38,6 +38,8 @@ The basic use is to have a standard PS2 Keyboard attached to Arduino uno and tra
 
 /* 
 In order to be able to store 1000 entries in the EPROOM DB library has been modified slightly
+
+Serial interface is set to 57600 to avoid delays on debug
 */
 
 #define Serial_debug	// Enables serial debugging when not commented (improves speed when not enabled)	
@@ -58,15 +60,16 @@ void setup() {
 	keyboard.begin(DataPin, IRQpin);
 	#if defined Serial_debug
 		Serial.begin(57600);
-		Serial.println(F("MA Keyboard V1.2.1"));
+		Serial.println(F("MA Keyboard V1.2.2\n"));
 	#endif
 	init_DBs ();
 	setup_artnet ();
-	Serial.println (freeRam ());
+	Print_freeRam();
 	//Show_all_records();		// Shows all recorded records in the EEPROM
-	Serial.println("Press Ctrol + ESC Key to access mapping functions\n");
-	//Serial.println("Press Ctrol + F1 Key to change artnet universe\n");
-	//Serial.println("Press Ctrol + F2 Key to access device IP\n");
+	Show_dmx_universe ();		// Shows dmx address information
+	Serial.println("\nPress Ctrol + ESC Key to access mapping functions");
+	Serial.println("Press Ctrol + F1 Key to change artnet subnet and universe");
+	//Serial.println("Press Ctrol + F2 Key to access device IP");
 	//Serial.println("Press Ctrol + F3 Key to change DMX refreshrate (default 50Hz)\n");
 	loop_artnet();		// Broatcast and restore all DMX
 }
@@ -102,7 +105,8 @@ void loop() {
 					mapping_keys ();		
 				}else if (c == 770) {		// Ctrl + F1 Key to change artnet universe
 					#if defined Serial_debug
-					Serial.print(F("\nChange Artnet Universe (default 100)"));
+					Serial.print(F("\nChange Artnet Subnet and Universe (default Subnet 6 - Universe 4 (MA 100))"));
+					change_dmx_universe ();
 					#endif						
 				}else if (c == 771) {		// Ctrl + F2 Key to access device IP
 					#if defined Serial_debug
@@ -311,6 +315,24 @@ boolean recevie_data (char* parameter_container,int buffer) {
 	}
 }
 
+void change_dmx_universe () {
+	// When chaning universes we have to modify de formation of Artnet Packets
+	Show_dmx_universe ();
+
+	// We have to check that Univers is max from 0 - 15 otherwise we will offset
+
+}
+
+void Show_dmx_universe () {
+	// When chaning universes we have to modify de formation of Artnet Packets
+	Serial.print(F("DMX subnet is: "));
+	Serial.println (get_DMX_subnet());
+	Serial.print(F("DMX universe is: "));
+	Serial.println (get_DMX_universe());
+	Serial.print(F("MA universe: "));
+	Serial.println (get_DMX_full_address());
+}
+
 
 int freeRam () 	// Check ram available
 {
@@ -318,6 +340,12 @@ int freeRam () 	// Check ram available
  int v; 
  return (int) &v - (__brkval == 0 ? (int) &__heap_start : (int) __brkval); 
 }
+
+void Print_freeRam () {
+	Serial.print(F("Available SDRAM: "));
+	Serial.println (freeRam ());
+}
+
 
 
 // Keycodes for numbers:

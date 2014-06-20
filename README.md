@@ -80,4 +80,6 @@ Code Updates
 * Fixed mapping issues
 * Added refresh every 3 seconds
 
-
+** 20-06-2014 V1.2.2
+* Added subnet / universe functionality in artnet functions
+* Some debug info added
