@@ -48,6 +48,7 @@ Serial interface is set to 57600 to avoid delays on debug
 
 const int DataPin = 5;
 const int IRQpin =  3;
+const int Light = 6;
 const byte DmxRefresh = 50;	// Maximum refresh rate in Hz  (If there is no information to send the refreshrate will be 0)
 unsigned int interval = 1000 / DmxRefresh;
 unsigned long previousMillis = 0;
@@ -60,18 +61,23 @@ void setup() {
 	keyboard.begin(DataPin, IRQpin);
 	#if defined Serial_debug
 		Serial.begin(57600);
-		Serial.println(F("MA Keyboard V1.2.2\n"));
+		Serial.println(F("MA Keyboard V1.3\n"));
 	#endif
 	init_DBs ();
 	setup_artnet ();
 	Print_freeRam();
 	//Show_all_records();		// Shows all recorded records in the EEPROM
 	Show_dmx_universe ();		// Shows dmx address information
-	Serial.println("\nPress Ctrol + ESC Key to access mapping functions");
-	Serial.println("Press Ctrol + F1 Key to change artnet subnet and universe");
-	//Serial.println("Press Ctrol + F2 Key to access device IP");
-	//Serial.println("Press Ctrol + F3 Key to change DMX refreshrate (default 50Hz)\n");
+	Serial.println("\nPress KEYMAP to access mapping functions (or Ctrl + ESC)");
+	Serial.println("Press CHANGE UNI to change artnet subnet and universe (or Ctrl + F1)");
+	Serial.println("Press CHANGE IP to access device IP (or Ctrl + F2)");
+	Serial.println("Press LED To Change LED intensity (or Ctrl + F3)\n");
 	loop_artnet();		// Broatcast and restore all DMX
+	pinMode(Light, OUTPUT);			// Set led light as OUTPUT
+	for (int a = 255; a> 0; a--) {
+		analogWrite (Light, a);
+		delay (8);
+	}		// Sets led to high
 }
 
 
@@ -108,13 +114,15 @@ void loop() {
 					Serial.print(F("\nChange Artnet Subnet and Universe (default Subnet 6 - Universe 4 (MA 100))"));
 					change_dmx_universe ();
 					#endif						
-				}else if (c == 771) {		// Ctrl + F2 Key to access device IP
+				}else if (c == 769) {		// Ctrl + F2 Key to access device IP
 					#if defined Serial_debug
 					Serial.print(F("\nChange IP"));
+					change_IP ();
 					#endif						
-				}else if (c == 769) {		// Ctrl + F3 F3 Key to change DMX refreshrate (default 50Hz)
+				}else if (c == 777) {		// Ctrl + F3 Key to change DMX refreshrate (default 50Hz)
 					#if defined Serial_debug
-					Serial.print(F("\nChange DMX refreshrate (default 50)"));
+					Serial.print(F("\nChange Led Brightness, use keys + and - and enter when ready"));
+					change_led_brightnes ();
 					#endif						
 				}else{						// Send artnet channel coresponding to S
 					artnet_buffer_on (dmxChannel);
@@ -198,16 +206,20 @@ void mapping_keys () {
 	}
 	Serial.print(F("Type new DMX channel number and press enter: "));		// Assign a function
 	unsigned int new_function = (get_number_serial ());
-	write_record (key_index, new_function);			// Record new function into EEPROM memory
-	Serial.print(F("Recorded! "));
-	Serial.println(new_function);
+	if (new_function != '\0') {
+		write_record (key_index, new_function);			// Record new function into EEPROM memory
+		Serial.print(F("Recorded! "));
+		Serial.println(new_function);
+	}else{
+		Serial.println(F("Ignored!"));
+	}
 }
 
 unsigned int get_number_serial () {
 	Serial.flush ();
 	const int buf = 6;
 	char serial_data[buf];
-	recevie_data (serial_data,buf);
+	if (!recevie_data (serial_data,buf)) return '\0';
 	char * thisChar = serial_data;
 	// Serial.println (atoi(thisChar));
 	return atoi(thisChar);
@@ -263,10 +275,13 @@ boolean recevie_data (char* parameter_container,int buffer) {
 				return false;
 		}
 
-		if (c==90) {
+		if (c==90) {		// enter
 			Serial.println(' ');
 			return true;
-		} else {
+		} else if (c==118) {		// escape
+			Serial.println(' ');
+			return false;
+		}else{
 			if (c == 22 || c == 105) { //1
 				received_num = '1';
 				Serial.print('1');
@@ -319,8 +334,50 @@ void change_dmx_universe () {
 	// When chaning universes we have to modify de formation of Artnet Packets
 	Show_dmx_universe ();
 
-	// We have to check that Univers is max from 0 - 15 otherwise we will offset
+	// Chose an option to enter the data we want
+	unsigned int choosen_option = 0;
+	while ((choosen_option != 1) && (choosen_option != 2)) {
+		Serial.println(F("Choose between entering subnet and universe (1) or MA universe (2): "));
+		choosen_option = get_number_serial ();
 
+		switch (choosen_option) {		// switch between the different options
+			case 1:	{	// Option1 subnet and universe
+				byte choosen_subnet = 50;
+				while ((choosen_subnet > 15) && (choosen_subnet <= 255))  {	
+					Serial.println(F("Type in subnet: "));
+					choosen_subnet = get_number_serial ();
+					if ((choosen_subnet <= 15) && (choosen_subnet >= 0)) {
+						change_subnet (choosen_subnet);		// Record subnet
+					}else{
+						Serial.println(F("Subnet must be in range of 0 - 15"));
+					}
+				}
+
+				byte choosen_universe = 50;
+				while ((choosen_universe > 15) && (choosen_universe <= 255))  {	
+					Serial.println(F("Type in universe: "));
+					choosen_universe = get_number_serial ();
+					if ((choosen_universe <= 15) && (choosen_universe >= 0)) {
+						change_universe (choosen_universe);	// Record universe
+					}else{
+						Serial.println(F("Universe must be in range of 0 - 15"));
+					}
+				}
+				break;}
+
+			case 2:	{	// Option2 MA universe
+				int choosen_universe = 0;
+				Serial.println(F("Type in MA universe: "));
+				choosen_universe = get_number_serial ();
+				change_full_dmx_address (choosen_universe);
+				break;}
+
+			default: {	// Option not valid
+				Serial.println(F("Option not valid, please choose a valid option."));
+				break;}
+		}
+	}
+	Show_dmx_universe ();		// Show new data
 }
 
 void Show_dmx_universe () {
@@ -332,6 +389,71 @@ void Show_dmx_universe () {
 	Serial.print(F("MA universe: "));
 	Serial.println (get_DMX_full_address());
 }
+
+void change_IP () {
+	Serial.println(F("Change IP empty"));
+}
+
+void change_led_brightnes () {
+	byte temp_val = 0;
+	uint16_t key_index = 0;
+	while (true) {
+		Serial.println(F("Loop"));
+		key_index = receive_next_pressed_key();
+		Serial.println(key_index);
+
+		if (key_index == 90) {		// key enter
+			return;
+		}
+
+		if (key_index == 121) {		// key +
+			if (temp_val == 0) {
+				temp_val = 255;
+			}else{
+				temp_val = temp_val - 15;
+			}
+			analogWrite (Light,temp_val);
+		}
+
+		if (key_index == 123) {		// key -
+			if (temp_val == 255) {
+				temp_val = 0;
+			}else {
+				temp_val = temp_val + 15;
+			}
+			analogWrite (Light,temp_val);
+		}
+
+		if (key_index == 328) {		// key MA
+			boolean surt = false;
+			while (!surt) {
+				for (int a = 0; a< 255; a++) {
+					analogWrite (Light, a);
+					delay (5);
+					if (received_key_ready ()) {		// Check if there is a key available to read
+						surt=true;
+						break;
+					} 
+				}
+
+				for (int a = 254; a>= 0; a--) {
+					analogWrite (Light, a);
+					delay (5);
+					if (received_key_ready ()) {
+						surt=true;
+						break;
+					} 
+				}
+			}
+			analogWrite (Light,temp_val);		// restore to the desired value
+			Serial.println(F("surt ok"));
+			key_index = receive_next_pressed_key();			// read before going out so it wont bounce in case is the same key or enter.
+			key_index = 0;
+		}
+	}	
+}
+
+
 
 
 int freeRam () 	// Check ram available

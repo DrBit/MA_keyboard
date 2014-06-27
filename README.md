@@ -83,3 +83,7 @@ Code Updates
 ** 20-06-2014 V1.2.2
 * Added subnet / universe functionality in artnet functions
 * Some debug info added
+
+** 27-06-2014 V1.3
+* Added led intensity handler
+* Added press ESC to avoid recording a maping key
