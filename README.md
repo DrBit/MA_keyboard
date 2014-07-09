@@ -65,25 +65,29 @@ Example of MA2onPC configuration:
 Code Updates
 ============
 
-** 17-06-2014 V1.1 
-* Fixed Bug in wich release keys would be missed and DMX not updated acordingly
-* Added Max Refresh Rate of the DMX packets (default 50 Hz)
+** 09-07-2014 V1.4
+* Fixed bug sending random data after the amount of DMX channels
+* Added new keyboard layouts for control + extra keyboard
 
-** 18-06-2014 V1.1.1
-* Added function that will only broadcast DMX if there is data available. (Greatly reduces trafic on the network)
-* Changed Serial transmit rate to 57600 to reduce delay when debugging
-
-** 18-06-2014 V1.2
-* Fixed bug, when pressing shift or alt and releasing + other keys and then releasing shift first would cause some problems.
-
-** 19-06-2014 V1.2.1
-* Fixed mapping issues
-* Added refresh every 3 seconds
+** 27-06-2014 V1.3
+* Added led intensity handler
+* Added press ESC to avoid recording a maping key
 
 ** 20-06-2014 V1.2.2
 * Added subnet / universe functionality in artnet functions
 * Some debug info added
 
-** 27-06-2014 V1.3
-* Added led intensity handler
-* Added press ESC to avoid recording a maping key
+** 19-06-2014 V1.2.1
+* Fixed mapping issues
+* Added refresh every 3 seconds
+
+** 18-06-2014 V1.2
+* Fixed bug, when pressing shift or alt and releasing + other keys and then releasing shift first would cause some problems.
+
+** 18-06-2014 V1.1.1
+* Added function that will only broadcast DMX if there is data available. (Greatly reduces trafic on the network)
+* Changed Serial transmit rate to 57600 to reduce delay when debugging
+
+** 17-06-2014 V1.1 
+* Fixed Bug in wich release keys would be missed and DMX not updated acordingly
+* Added Max Refresh Rate of the DMX packets (default 50 Hz)

@@ -61,7 +61,7 @@ void setup() {
 	keyboard.begin(DataPin, IRQpin);
 	#if defined Serial_debug
 		Serial.begin(57600);
-		Serial.println(F("MA Keyboard V1.3\n"));
+		Serial.println(F("MA Keyboard V1.4\n"));
 	#endif
 	init_DBs ();
 	setup_artnet ();
@@ -70,8 +70,8 @@ void setup() {
 	Show_dmx_universe ();		// Shows dmx address information
 	Serial.println("\nPress KEYMAP to access mapping functions (or Ctrl + ESC)");
 	Serial.println("Press CHANGE UNI to change artnet subnet and universe (or Ctrl + F1)");
-	Serial.println("Press CHANGE IP to access device IP (or Ctrl + F2)");
-	Serial.println("Press LED To Change LED intensity (or Ctrl + F3)\n");
+	Serial.println("Press CHANGE IP to access device IP (or Ctrl + F3)");
+	Serial.println("Press LED To Change LED intensity (or Ctrl + F4)\n");
 	loop_artnet();		// Broatcast and restore all DMX
 	pinMode(Light, OUTPUT);			// Set led light as OUTPUT
 	for (int a = 255; a> 0; a--) {
@@ -207,7 +207,7 @@ void mapping_keys () {
 	Serial.print(F("Type new DMX channel number and press enter: "));		// Assign a function
 	unsigned int new_function = (get_number_serial ());
 	if (new_function != '\0') {
-		write_record (key_index, new_function);			// Record new function into EEPROM memory
+		write_record (key_index, byte(new_function));			// Record new function into EEPROM memory
 		Serial.print(F("Recorded! "));
 		Serial.println(new_function);
 	}else{
@@ -228,8 +228,7 @@ unsigned int get_number_serial () {
 
 boolean recevie_data (char* parameter_container,int buffer) {
 	// first clean data
-	int len = buffer;
-	for (int c = 0; c < len; c++) {
+	for (int c = 0; c < buffer; c++) {
 		parameter_container[c] = 0;
 	}
 
@@ -245,7 +244,7 @@ boolean recevie_data (char* parameter_container,int buffer) {
 					return true;
 				}
 			}else{
-				if (strlen(parameter_container) == buffer ) {
+				if (strlen(parameter_container) == (buffer-1) ) {
 					// Serial.println (" Reached the data max lengh, we reset the tag" );
 					// Error!! buffer overload
 					return false;
@@ -269,13 +268,8 @@ boolean recevie_data (char* parameter_container,int buffer) {
 		}
 		char received_num = 0;
 
-		if (strlen(parameter_container) == buffer ) {
-				// Serial.println (" Reached the data max lengh, we reset the tag" );
-				// Error!! buffer overload
-				return false;
-		}
-
 		if (c==90) {		// enter
+			parameter_container[strlen(parameter_container)] = '\0';
 			Serial.println(' ');
 			return true;
 		} else if (c==118) {		// escape
@@ -324,7 +318,11 @@ boolean recevie_data (char* parameter_container,int buffer) {
 			}
 
 			if (received_num != 0) {
-				parameter_container[strlen(parameter_container)]=received_num;
+				if (strlen(parameter_container) > (buffer-1) ) {
+					//skip buffer full
+				}else{
+					parameter_container[strlen(parameter_container)]=received_num;
+				}
 			}
 		}				
 	}

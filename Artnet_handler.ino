@@ -36,13 +36,13 @@ byte destination_Ip[]= {   255,255,255,255 };        // the ip to send data, 255
 unsigned int localPort = 6454;      // artnet UDP port is by default 6454
 // We set default to subnet 6 universe 4 (universe 100 in MA)
 byte DMX_Subnet=6;//Subnet is from 0 to 15 (0 till F)
-byte DMX_Universe=4;//universe is from 0 to 15 (0 till F)
+byte DMX_Universe=5;//universe is from 0 to 15 (0 till F)
 unsigned int full_dmx_address = (DMX_Subnet*16)+DMX_Universe;   // Full address
 const int number_of_channels=226; //512 for 512 channels, MAX=512
 
 //HARDWARE
-byte mac[] = {  144, 162, 218, 00, 16, 96  };//the mac adress of ethernet shield or uno shield board
-byte ip[] = {   192,168,0,116 };// the IP adress of your device, that should be in same universe of the network you are using, here: 192.168.1.x
+byte mac[] = {  144, 162, 218, 00, 17, 96  };//the mac adress of ethernet shield or uno shield board
+byte ip[] = {   192,168,0,117 };// the IP adress of your device, that should be in same universe of the network you are using, here: 192.168.1.x
 
 //ART-NET variables
 char ArtNetHead[8]="Art-Net";
@@ -56,7 +56,7 @@ byte buffer_dmx[number_of_channels]; //buffer used for DMX data
 EthernetUDP Udp;
 
 //Artnet PACKET
-byte  ArtDmxBuffer[(art_net_header_size+number_of_channels)+8+1];
+byte  ArtDmxBuffer[(art_net_header_size+1)+512];
 
 
 void setup_artnet() {
@@ -75,7 +75,7 @@ void loop_artnet() {
    construct_arnet_packet();
    
    Udp.beginPacket(destination_Ip, localPort);
-   Udp.write(ArtDmxBuffer,(art_net_header_size+number_of_channels+1)); // was Udp.sendPacket
+   Udp.write(ArtDmxBuffer,(art_net_header_size+1+512)); // was Udp.sendPacket
    Udp.endPacket();
 
    //clear_artnet_buffer ();
@@ -146,15 +146,19 @@ void construct_arnet_packet()
   /*The top 7 bits of the 15 bit Port-Address to which this packet is destined.*/
 
   //Filed 9 - LengthHi (int8)
-  ArtDmxBuffer[16] = number_of_channels>> 8;
+  ArtDmxBuffer[16] = byte(512) >> 8;
 
   //Filed 10 - Length (int8)
-  ArtDmxBuffer[17] = number_of_channels;
+  ArtDmxBuffer[17] = byte(512);
 
   //Filed 11 - Length (int8) [Length]
-  for (int t= 0;t<number_of_channels;t++)
+  for (int t=0;t<512;t++)
   {
-    ArtDmxBuffer[t+art_net_header_size+1]=buffer_dmx[t];    
+    if (t<number_of_channels) {
+      ArtDmxBuffer[t+art_net_header_size+1]=buffer_dmx[t];
+    }else{
+      ArtDmxBuffer[t+art_net_header_size+1]=byte(0);
+    }
   }
   /*An variable length array of DMX512 lighting data.*/
 }
