@@ -68,6 +68,7 @@ Code Updates
 ** 09-07-2014 V1.4
 * Fixed bug sending random data after the amount of DMX channels
 * Added new keyboard layouts for control + extra keyboard
+* Fixed bug that would potenciall hang when entering a huge number while mapping
 
 ** 27-06-2014 V1.3
 * Added led intensity handler
